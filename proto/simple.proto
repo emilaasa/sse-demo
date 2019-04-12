@@ -1,0 +1,15 @@
+syntax  = "proto3";
+
+package proto;
+
+service SimpleProto {
+	rpc GetMessage(SimpleRequest) returns (SimpleResponse) {}
+}
+
+message SimpleRequest {
+	string name = 1;
+}
+
+message SimpleResponse {
+	string name = 1;
+}
