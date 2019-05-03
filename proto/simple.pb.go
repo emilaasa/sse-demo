@@ -108,16 +108,16 @@ func init() {
 func init() { proto.RegisterFile("proto/simple.proto", fileDescriptor_4285f8f75e6ba5cf) }
 
 var fileDescriptor_4285f8f75e6ba5cf = []byte{
-	// 132 bytes of a gzipped FileDescriptorProto
+	// 135 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2a, 0x28, 0xca, 0x2f,
 	0xc9, 0xd7, 0x2f, 0xce, 0xcc, 0x2d, 0xc8, 0x49, 0xd5, 0x03, 0x73, 0x84, 0x58, 0xc1, 0x94, 0x92,
 	0x32, 0x17, 0x6f, 0x30, 0x58, 0x38, 0x28, 0xb5, 0xb0, 0x34, 0xb5, 0xb8, 0x44, 0x48, 0x88, 0x8b,
 	0x25, 0x2f, 0x31, 0x37, 0x55, 0x82, 0x51, 0x81, 0x51, 0x83, 0x33, 0x08, 0xcc, 0x56, 0x52, 0xe1,
-	0xe2, 0x83, 0x29, 0x2a, 0x2e, 0xc8, 0xcf, 0x2b, 0x4e, 0xc5, 0xa6, 0xca, 0xc8, 0x8b, 0x8b, 0x1b,
-	0xa2, 0x2a, 0x00, 0x6c, 0x81, 0x35, 0x17, 0x97, 0x7b, 0x6a, 0x89, 0x6f, 0x6a, 0x71, 0x71, 0x62,
-	0x7a, 0xaa, 0x90, 0x08, 0xc4, 0x5a, 0x3d, 0x14, 0xcb, 0xa4, 0x44, 0xd1, 0x44, 0x21, 0xa6, 0x2b,
-	0x31, 0x24, 0xb1, 0x81, 0xc5, 0x8d, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0xef, 0x32, 0xea, 0x59,
-	0xba, 0x00, 0x00, 0x00,
+	0xe2, 0x83, 0x29, 0x2a, 0x2e, 0xc8, 0xcf, 0x2b, 0x4e, 0xc5, 0xa6, 0xca, 0xc8, 0x97, 0x8b, 0x1b,
+	0xa2, 0x2a, 0x00, 0x6c, 0x81, 0x1d, 0x17, 0xb7, 0x7b, 0x6a, 0x89, 0x6f, 0x6a, 0x71, 0x71, 0x62,
+	0x7a, 0x6a, 0xb1, 0x90, 0x08, 0xc4, 0x5e, 0x3d, 0x14, 0xdb, 0xa4, 0x44, 0xd1, 0x44, 0x21, 0xc6,
+	0x2b, 0x31, 0x18, 0x30, 0x26, 0xb1, 0x81, 0x65, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0x9a,
+	0x82, 0x7d, 0x44, 0xbd, 0x00, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -132,7 +132,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type SimpleProtoClient interface {
-	GetMessage(ctx context.Context, in *SimpleRequest, opts ...grpc.CallOption) (*SimpleResponse, error)
+	GetMessages(ctx context.Context, in *SimpleRequest, opts ...grpc.CallOption) (SimpleProto_GetMessagesClient, error)
 }
 
 type simpleProtoClient struct {
@@ -143,51 +143,78 @@ func NewSimpleProtoClient(cc *grpc.ClientConn) SimpleProtoClient {
 	return &simpleProtoClient{cc}
 }
 
-func (c *simpleProtoClient) GetMessage(ctx context.Context, in *SimpleRequest, opts ...grpc.CallOption) (*SimpleResponse, error) {
-	out := new(SimpleResponse)
-	err := c.cc.Invoke(ctx, "/proto.SimpleProto/GetMessage", in, out, opts...)
+func (c *simpleProtoClient) GetMessages(ctx context.Context, in *SimpleRequest, opts ...grpc.CallOption) (SimpleProto_GetMessagesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_SimpleProto_serviceDesc.Streams[0], "/proto.SimpleProto/GetMessages", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &simpleProtoGetMessagesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type SimpleProto_GetMessagesClient interface {
+	Recv() (*SimpleResponse, error)
+	grpc.ClientStream
+}
+
+type simpleProtoGetMessagesClient struct {
+	grpc.ClientStream
+}
+
+func (x *simpleProtoGetMessagesClient) Recv() (*SimpleResponse, error) {
+	m := new(SimpleResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // SimpleProtoServer is the server API for SimpleProto service.
 type SimpleProtoServer interface {
-	GetMessage(context.Context, *SimpleRequest) (*SimpleResponse, error)
+	GetMessages(*SimpleRequest, SimpleProto_GetMessagesServer) error
 }
 
 func RegisterSimpleProtoServer(s *grpc.Server, srv SimpleProtoServer) {
 	s.RegisterService(&_SimpleProto_serviceDesc, srv)
 }
 
-func _SimpleProto_GetMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SimpleRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _SimpleProto_GetMessages_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SimpleRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(SimpleProtoServer).GetMessage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.SimpleProto/GetMessage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimpleProtoServer).GetMessage(ctx, req.(*SimpleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(SimpleProtoServer).GetMessages(m, &simpleProtoGetMessagesServer{stream})
+}
+
+type SimpleProto_GetMessagesServer interface {
+	Send(*SimpleResponse) error
+	grpc.ServerStream
+}
+
+type simpleProtoGetMessagesServer struct {
+	grpc.ServerStream
+}
+
+func (x *simpleProtoGetMessagesServer) Send(m *SimpleResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 var _SimpleProto_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.SimpleProto",
 	HandlerType: (*SimpleProtoServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "GetMessage",
-			Handler:    _SimpleProto_GetMessage_Handler,
+			StreamName:    "GetMessages",
+			Handler:       _SimpleProto_GetMessages_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/simple.proto",
 }

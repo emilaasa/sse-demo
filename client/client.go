@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"log"
 
 	pb "github.com/emilaasa/sse-demo/proto"
@@ -18,13 +18,21 @@ func main() {
 	client := pb.NewSimpleProtoClient(conn)
 	ctx := context.Background()
 
-	rsp, err := client.GetMessage(ctx, &pb.SimpleRequest{
-		Name: "Tobias",
-	})
+	stream, err := client.GetMessages(ctx,
+		&pb.SimpleRequest{
+			Name: "Tobias",
+		})
 	if err != nil {
-		log.Fatal(err)
 	}
-
-	fmt.Printf("rsp = %+v\n", rsp)
+	for {
+		msg, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("%v.GetMessages(_) = _, %v", client, err)
+		}
+		log.Println(msg)
+	}
 
 }

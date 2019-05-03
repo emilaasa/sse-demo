@@ -3,7 +3,7 @@ syntax  = "proto3";
 package proto;
 
 service SimpleProto {
-	rpc GetMessage(SimpleRequest) returns (SimpleResponse) {}
+	rpc GetMessages(SimpleRequest) returns (stream SimpleResponse) {}
 }
 
 message SimpleRequest {

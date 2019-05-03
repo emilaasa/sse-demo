@@ -1,9 +1,9 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net"
+	"time"
 
 	pb "github.com/emilaasa/sse-demo/proto"
 	"google.golang.org/grpc"
@@ -11,10 +11,16 @@ import (
 
 type service struct{}
 
-func (s *service) GetMessage(ctx context.Context, r *pb.SimpleRequest) (*pb.SimpleResponse, error) {
-	return &pb.SimpleResponse{
-		Name: "Emil",
-	}, nil
+func (s *service) GetMessages(req *pb.SimpleRequest, stream pb.SimpleProto_GetMessagesServer) error {
+	for {
+		time.Sleep(2000 * time.Millisecond)
+		if err := stream.Send(
+			&pb.SimpleResponse{
+				Name: "Emil",
+			}); err != nil {
+			return err
+		}
+	}
 }
 
 func grpcServer() {
@@ -30,6 +36,13 @@ func grpcServer() {
 		log.Fatalf("failed to start grpc server: %v", err)
 	}
 }
+
 func main() {
 	grpcServer()
 }
+
+// Look at the grpc headers
+// Can I do the event-id in message or out of message?
+// Resume the stream from an id
+// SAD paths:
+// 1. Event ID is missing in the event queue
