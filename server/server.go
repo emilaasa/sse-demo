@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"time"
 
 	pb "github.com/emilaasa/sse-demo/proto"
@@ -37,8 +39,30 @@ func grpcServer() {
 	}
 }
 
+func handler(w http.ResponseWriter, r *http.Request) {
+	f, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming not supported!", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Transfer-Encoding", "chunked")
+
+	for {
+		time.Sleep(1 * time.Second)
+		fmt.Fprintf(w, "data: Message: %s\n\n", "LOL")
+		f.Flush()
+	}
+}
+
 func main() {
-	grpcServer()
+	go func() {
+		grpcServer()
+	}()
+	http.HandleFunc("/", handler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 // Look at the grpc headers
