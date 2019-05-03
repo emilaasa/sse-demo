@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -50,9 +52,31 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Transfer-Encoding", "chunked")
 
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("grpc.Dial err:%v", err)
+	}
+
+	client := pb.NewSimpleProtoClient(conn)
+	ctx := context.Background()
+
+	stream, err := client.GetMessages(ctx,
+		&pb.SimpleRequest{
+			Name: "Tobias",
+		})
+	if err != nil {
+	}
+
 	for {
-		time.Sleep(1 * time.Second)
-		fmt.Fprintf(w, "data: Message: %s\n\n", "LOL")
+		msg, err := stream.Recv()
+		if err == io.EOF {
+			fmt.Fprint(w, "\n\n")
+			break
+		}
+		if err != nil {
+			log.Fatalf("%v.GetMessages(_) = _, %v", client, err)
+		}
+		fmt.Fprintf(w, "data: %s\n\n", msg)
 		f.Flush()
 	}
 }
