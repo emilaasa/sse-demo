@@ -51,6 +51,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Transfer-Encoding", "chunked")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {

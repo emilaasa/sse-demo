@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+</head>
+<body>
+	<script>
+		var evtSource = new EventSource("http://localhost:8080/")
+		evtSource.onmessage = function(e) {
+			var newElement = document.createElement("li");
+			var eventList = document.getElementById('list');
+
+			newElement.innerHTML = "message: " + e.data;
+			eventList.appendChild(newElement);
+			};
+	</script>
+
+	 <ul id="list">
+	</ul>
+</body>
+</html>

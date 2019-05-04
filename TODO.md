@@ -1,3 +1,6 @@
 [x] make the grpc server a continously streaming api
-[ ] translate the grpc stream to http sse in another thing
+[x] translate the grpc stream to http sse in separate goroutine
+
+[ ] create simple index page that uses eventsource to demo reconnect
+
 
