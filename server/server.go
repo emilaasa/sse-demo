@@ -89,9 +89,3 @@ func main() {
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
-
-// Look at the grpc headers
-// Can I do the event-id in message or out of message?
-// Resume the stream from an id
-// SAD paths:
-// 1. Event ID is missing in the event queue

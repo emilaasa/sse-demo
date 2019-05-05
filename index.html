@@ -8,12 +8,21 @@
 	<script>
 		var evtSource = new EventSource("http://localhost:8080/")
 		evtSource.onmessage = function(e) {
-			var newElement = document.createElement("li");
-			var eventList = document.getElementById('list');
+			var newElement = document.createElement("li")
+			var eventList = document.getElementById('list')
 
-			newElement.innerHTML = "message: " + e.data;
-			eventList.appendChild(newElement);
-			};
+			newElement.innerHTML = "message: " + e.data
+			eventList.appendChild(newElement)
+			}
+		evtSource.onerror = function(e) {
+			var err
+			switch(e.target.readyState) {
+				case EventSource.CONNECTING:
+					err = 'Error - Reconnecting...'
+					break
+			}
+			console.log(err)
+		}
 	</script>
 
 	 <ul id="list">
