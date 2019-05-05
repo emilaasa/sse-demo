@@ -41,18 +41,12 @@ func grpcServer() {
 	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func proxyHandler(w http.ResponseWriter, r *http.Request) {
 	f, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Streaming not supported!", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Transfer-Encoding", "chunked")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("grpc.Dial err:%v", err)
@@ -61,12 +55,16 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	client := pb.NewSimpleProtoClient(conn)
 	ctx := context.Background()
 
-	stream, err := client.GetMessages(ctx,
+	stream, _ := client.GetMessages(ctx,
 		&pb.SimpleRequest{
-			Name: "Tobias",
+			Name: "",
 		})
-	if err != nil {
-	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	for {
 		msg, err := stream.Recv()
@@ -86,6 +84,8 @@ func main() {
 	go func() {
 		grpcServer()
 	}()
-	http.HandleFunc("/", handler)
+	fs := http.FileServer(http.Dir("./debug"))
+	http.Handle("/debug/", http.StripPrefix("/debug/", fs))
+	http.HandleFunc("/", proxyHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
