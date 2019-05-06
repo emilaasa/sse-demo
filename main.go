@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"strconv"
 	"time"
 
 	pb "github.com/emilaasa/sse-demo/proto"
@@ -15,16 +16,20 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type service struct{}
+type service struct {
+	eventID int
+}
 
 func (s *service) GetMessages(req *pb.SimpleRequest, stream pb.SimpleProto_GetMessagesServer) error {
 	headers, _ := metadata.FromIncomingContext(stream.Context())
 	fmt.Println(headers)
 	for {
 		time.Sleep(2000 * time.Millisecond)
+		s.eventID++
 		if err := stream.Send(
 			&pb.SimpleResponse{
-				Name: "Emil",
+				EventID: strconv.Itoa(s.eventID),
+				Payload: "some message",
 			}); err != nil {
 			return err
 		}
@@ -64,8 +69,14 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 
 	client := pb.NewSimpleProtoClient(conn)
 
-	header := metadata.New(map[string]string{"Last-Event-Id": "1"})
-	ctx := metadata.NewOutgoingContext(context.Background(), header)
+	var ctx context.Context
+	id := r.Header.Get("Last-Event-Id")
+	if id != "" {
+		header := metadata.New(map[string]string{"Last-Event-Id": id})
+		ctx = metadata.NewOutgoingContext(context.Background(), header)
+	} else {
+		ctx = context.Background()
+	}
 
 	stream, _ := client.GetMessages(ctx,
 		&pb.SimpleRequest{})

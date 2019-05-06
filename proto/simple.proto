@@ -10,5 +10,6 @@ message SimpleRequest {
 }
 
 message SimpleResponse {
-	string name = 1;
+	string eventID = 1;
+	string payload = 2;
 }
