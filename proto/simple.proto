@@ -7,7 +7,6 @@ service SimpleProto {
 }
 
 message SimpleRequest {
-	string name = 1;
 }
 
 message SimpleResponse {

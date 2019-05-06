@@ -7,15 +7,19 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"time"
 
 	pb "github.com/emilaasa/sse-demo/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type service struct{}
 
 func (s *service) GetMessages(req *pb.SimpleRequest, stream pb.SimpleProto_GetMessagesServer) error {
+	headers, _ := metadata.FromIncomingContext(stream.Context())
+	fmt.Println(headers)
 	for {
 		time.Sleep(2000 * time.Millisecond)
 		if err := stream.Send(
@@ -47,18 +51,24 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Streaming not supported!", http.StatusInternalServerError)
 		return
 	}
+	reqdump, err := httputil.DumpRequest(r, false)
+	if err != nil {
+		log.Fatalf("err: %v failed to dump request, paniiic!", err)
+	}
+
+	fmt.Println(string(reqdump))
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("grpc.Dial err:%v", err)
 	}
 
 	client := pb.NewSimpleProtoClient(conn)
-	ctx := context.Background()
+
+	header := metadata.New(map[string]string{"Last-Event-Id": "1"})
+	ctx := metadata.NewOutgoingContext(context.Background(), header)
 
 	stream, _ := client.GetMessages(ctx,
-		&pb.SimpleRequest{
-			Name: "",
-		})
+		&pb.SimpleRequest{})
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -75,7 +85,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatalf("%v.GetMessages(_) = _, %v", client, err)
 		}
-		fmt.Fprintf(w, "data: %s\n\n", msg)
+		fmt.Fprintf(w, "id: 1\ndata: %s\n\n", msg)
 		f.Flush()
 	}
 }
