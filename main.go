@@ -96,7 +96,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatalf("%v.GetMessages(_) = _, %v", client, err)
 		}
-		fmt.Fprintf(w, "id: 1\ndata: %s\n\n", msg)
+		fmt.Fprintf(w, "id: %s\ndata: %s\n\n", msg.EventID, msg.Payload)
 		f.Flush()
 	}
 }
